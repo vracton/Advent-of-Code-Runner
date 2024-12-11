@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advent of Code Runner</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/theme/material-darker.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/addon/lint/lint.min.css">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      text-align: center;
+      color: #ffffff;
+    }
+
+    .editor-container {
+      margin: 20px 0;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: block;
+      color: #b0b0b0;
+    }
+
+    textarea, input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background-color: #2b2b2b;
+      color: #e0e0e0;
+    }
+
+    textarea:focus, input:focus {
+      outline: none;
+      border-color: #007BFF;
+    }
+
+    button {
+      display: inline-block;
+      width: 48%;
+      padding: 10px;
+      background-color: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .output {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #2b2b2b;
+      border-radius: 4px;
+      border: 1px solid #444;
+      color: #e0e0e0;
+    }
+
+    .output pre {
+      margin: 0;
+      font-family: monospace;
+    }
+
+    .test-case {
+      margin-bottom: 20px;
+      padding: 10px;
+      background-color: #252525;
+      border-radius: 4px;
+      border: 1px solid #444;
+    }
+
+    .test-case textarea {
+      background-color: #2b2b2b;
+      color: #e0e0e0;
+      border: 1px solid #444;
+    }
+
+    .test-case textarea:focus {
+      outline: none;
+      border-color: #007BFF;
+    }
+  </style>
+</head>
+<body onload="loadCode();">
+  <div class="container">
+    <h1>Advent of Code Runner</h1>
+    <div class="editor-container">
+      <label for="part1-editor">Part 1 Code (JavaScript):</label>
+      <textarea id="part1-editor"></textarea>
+    </div>
+
+    <div class="editor-container">
+      <label for="part2-editor">Part 2 Code (JavaScript):</label>
+      <textarea id="part2-editor"></textarea>
+    </div>
+    <label for="sample-input">Sample Input:</label>
+    <textarea id="sample-input" placeholder="Enter sample input here..."></textarea>
+
+    <label for="final-input">Final Input:</label>
+    <textarea id="final-input" placeholder="Enter final input here..."></textarea>
+    <button onclick="runSample()">Run Sample Test Case</button>
+    <button onclick="runFinal()">Run Final Input</button>
+    <button onclick="saveCode()">Save Code</button>
+    <button onclick="loadCode()">Load Code</button>
+    <button onclick="downloadResults()">Download Results</button>
+    <button onclick="addTestCase()">Add Test Case</button>
+    <button onclick="runAllTestCases()">Run All Test Cases</button>
+    <div id="test-cases"></div>
+    <div class="output" id="output">
+      <h3>Output:</h3>
+      <pre id="output-text">Results will be displayed here...</pre>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/addon/lint/lint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/addon/lint/javascript-lint.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jshint@2.13.6/dist/jshint.min.js"></script>
+
+  <script>
+    const part1Editor = CodeMirror.fromTextArea(document.getElementById('part1-editor'), {
+      mode: "javascript",
+      theme: "material-darker",
+      lineNumbers: true,
+      gutters: ["CodeMirror-lint-markers"],
+      lint: true
+    });
+
+    const part2Editor = CodeMirror.fromTextArea(document.getElementById('part2-editor'), {
+      mode: "javascript",
+      theme: "material-darker",
+      lineNumbers: true,
+      gutters: ["CodeMirror-lint-markers"],
+      lint: true
+    });
+
+    function runCode(code, input) {
+      try {
+        return eval(code);
+      } catch (error) {
+        return `Error: ${error.message}`;
+      }
+    }
+
+    function validateInputs(part1Code, part2Code, input) {
+      if (!part1Code || !part2Code) {
+        alert("Please provide code for both Part 1 and Part 2.");
+        return false;
+      }
+      if (!input) {
+        alert("Input data is required.");
+        return false;
+      }
+      return true;
+    }
+
+    function saveCode() {
+      localStorage.setItem('part1Code', part1Editor.getValue());
+      localStorage.setItem('part2Code', part2Editor.getValue());
+      alert('Code saved!');
+    }
+
+    setInterval(function(){
+        localStorage.setItem('part1Code', part1Editor.getValue());
+        localStorage.setItem('part2Code', part2Editor.getValue());
+    },1000)
+
+    function loadCode() {
+      const part1Code = localStorage.getItem('part1Code');
+      const part2Code = localStorage.getItem('part2Code');
+      if (part1Code){
+        part1Editor.setValue(part1Code);
+      } else {
+        part1Editor.setValue(`function solvePart1(input) {\n  // Your code here\n  return "Output for Part 1";\n}\nsolvePart1(input);`);
+      }
+      if (part2Code){
+        part2Editor.setValue(part2Code);
+      } else {
+        part2Editor.setValue(`function solvePart2(input) {\n  // Your code here\n  return "Output for Part 2";\n}\nsolvePart2(input);`);
+      }
+      //alert('Code loaded!');
+    }
+
+    function runSample() {
+      const part1Code = part1Editor.getValue();
+      const part2Code = part2Editor.getValue();
+      const sampleInput = document.getElementById('sample-input').value;
+
+      if (!validateInputs(part1Code, part2Code, sampleInput)) return;
+
+      const part1Result = runCode(part1Code, sampleInput);
+      const part2Result = runCode(part2Code, sampleInput);
+
+      document.getElementById('output-text').innerText =
+        `Sample Test Case:\n\nPart 1 Output: ${part1Result}\nPart 2 Output: ${part2Result}`;
+    }
+
+    function runFinal() {
+      const part1Code = part1Editor.getValue();
+      const part2Code = part2Editor.getValue();
+      const finalInput = document.getElementById('final-input').value;
+
+      if (!validateInputs(part1Code, part2Code, finalInput)) return;
+
+      const part1Result = runCode(part1Code, finalInput);
+      const part2Result = runCode(part2Code, finalInput);
+
+      document.getElementById('output-text').innerText =
+        `Final Input:\n\nPart 1 Output: ${part1Result}\nPart 2 Output: ${part2Result}`;
+    }
+
+    function downloadResults() {
+      const outputText = document.getElementById('output-text').innerText;
+      const blob = new Blob([outputText], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'advent_of_code_results.txt';
+      link.click();
+    }
+
+    function addTestCase() {
+      const testCaseContainer = document.createElement('div');
+      testCaseContainer.classList.add('test-case');
+      testCaseContainer.innerHTML = `
+        <label>Test Input:</label>
+        <textarea placeholder="Enter test input"></textarea>
+        <label>Expected Output:</label>
+        <textarea placeholder="Enter expected output"></textarea>
+      `;
+      document.getElementById('test-cases').appendChild(testCaseContainer);
+    }
+
+    function runAllTestCases() {
+      const testCases = document.querySelectorAll('.test-case');
+      const part1Code = part1Editor.getValue();
+      const part2Code = part2Editor.getValue();
+      let sols = "";
+
+      testCases.forEach((testCase, index) => {
+        const input = testCase.querySelector('textarea').value;
+        const expectedOutput = testCase.querySelector('textarea:nth-child(4)').value;
+
+        const part1Result = runCode(part1Code, input);
+        const part2Result = runCode(part2Code, input);
+
+        sols+=`Test Case ${index + 1}:\nPart 1: ${part1Result} (Expected: ${expectedOutput})\nPart 2: ${part2Result} (Expected: ${expectedOutput})\n\n`
+      });
+      document.getElementById('output-text').innerText = sols;
+    }
+  </script>
+</body>
+</html>
